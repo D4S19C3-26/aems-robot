@@ -1,0 +1,41 @@
+# =============================================================
+# AEMS Workspace — .gitignore
+# =============================================================
+
+# ── Environment / secrets ────────────────────────────────────
+.env
+.env.local
+
+# ── Databases (never commit live databases) ──────────────────
+*.db
+*.db-shm
+*.db-wal
+
+# ── Python bytecode ──────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ── Colcon build / install / log artifacts ───────────────────
+# These are regenerated with:  colcon build --symlink-install
+build/
+install/
+log/
+
+# ── Pytest caches ────────────────────────────────────────────
+.pytest_cache/
+*.pytest_cache
+
+# ── ROS 2 temp files ─────────────────────────────────────────
+*.lock
+/tmp/*.lock
+
+# ── Editor / OS noise ────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

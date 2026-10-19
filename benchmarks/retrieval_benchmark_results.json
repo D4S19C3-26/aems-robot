@@ -1,0 +1,26 @@
+{
+  "hardware": {
+    "cpu": "AMD Ryzen 5 5500U with Radeon Graphics",
+    "cores": 12,
+    "ram": "13.5 GB",
+    "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39"
+  },
+  "record_count": 10000,
+  "embedding_model": "all-MiniLM-L6-v2",
+  "index_type": "faiss.IndexFlatIP",
+  "runs": 50,
+  "mean_latency_ms": 11.67,
+  "median_latency_ms": 11.61,
+  "p95_latency_ms": 13.04,
+  "p99_latency_ms": 13.7,
+  "min_latency_ms": 10.16,
+  "max_latency_ms": 14.29,
+  "qps": 85.7,
+  "breakdown": {
+    "query_embedding_ms": 10.53,
+    "faiss_search_ms": 0.95,
+    "scoring_ms": 0.18
+  },
+  "target_ms": 1000.0,
+  "target_met": true
+}

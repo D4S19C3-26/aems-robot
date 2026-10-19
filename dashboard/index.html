@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEMS // Mission Control</title>
+  <script>
+    document.title = "AEMS // Mission Control";
+    // Polyfill for Selenium IDE event synthesis (initKeyEvent)
+    (function() {
+      function polyfill(proto) {
+        if (proto && !proto.initKeyEvent) {
+          proto.initKeyEvent = function(type, bubbles, cancelable, viewArg, ctrlKey, altKey, shiftKey, metaKey, keyCode, charCode) {
+            this.initEvent(type, bubbles, cancelable);
+            Object.defineProperty(this, 'ctrlKey', { get: () => !!ctrlKey });
+            Object.defineProperty(this, 'altKey', { get: () => !!altKey });
+            Object.defineProperty(this, 'shiftKey', { get: () => !!shiftKey });
+            Object.defineProperty(this, 'metaKey', { get: () => !!metaKey });
+            Object.defineProperty(this, 'keyCode', { get: () => keyCode || 0 });
+            Object.defineProperty(this, 'charCode', { get: () => charCode || 0 });
+            Object.defineProperty(this, 'which', { get: () => keyCode || charCode || 0 });
+          };
+        }
+      }
+      polyfill(window.Event ? window.Event.prototype : null);
+      polyfill(window.KeyboardEvent ? window.KeyboardEvent.prototype : null);
+      polyfill(window.UIEvent ? window.UIEvent.prototype : null);
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-space: #060913;
+      --bg-panel: rgba(13, 21, 38, 0.92);
+      --bg-panel-solid: #0d1526;
+      --bg-panel-hover: rgba(20, 32, 58, 0.95);
+      --bg-card: rgba(6, 11, 22, 0.85);
+      
+      --cyan: #00f2fe;
+      --cyan-glow: rgba(0, 242, 254, 0.35);
+      --electric-blue: #3b82f6;
+      --blue-glow: rgba(59, 130, 246, 0.3);
+      --amber: #f59e0b;
+      --amber-glow: rgba(245, 158, 11, 0.35);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.35);
+      --crimson: #ef4444;
+      --crimson-glow: rgba(239, 68, 68, 0.35);
+      --purple: #a855f7;
+      
+      --border-subtle: rgba(0, 242, 254, 0.18);
+      --border-bright: rgba(0, 242, 254, 0.55);
+      --border-card: rgba(255, 255, 255, 0.08);
+      
+      --text-main: #f8fafc;
+      --text-dim: #94a3b8;
+      --text-muted: #64748b;
+      
+      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'Fira Code', 'Courier New', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-space);
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(0, 242, 254, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(59, 130, 246, 0.06) 0%, transparent 40%),
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding: 16px 20px 24px;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--cyan), var(--electric-blue));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #030712;
+      font-size: 20px;
+      box-shadow: 0 0 16px var(--cyan-glow);
+    }
+
+    .brand-text h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .brand-text span {
+      font-size: 11px;
+      color: var(--cyan);
+      font-family: var(--font-mono);
+      letter-spacing: 1px;
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .pulse-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid var(--emerald);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--emerald);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .pulse-badge.offline {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: var(--crimson);
+      color: var(--crimson);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 10px currentColor;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.6; }
+    }
+
+    .sys-clock {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    /* Dashboard 6-Panel Clean 3x2 Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      width: 100%;
+    }
+
+    @media (max-width: 1280px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 800px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      min-width: 0; /* Prevents CSS flexbox overflowing */
+      height: 360px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .panel:hover {
+      border-color: var(--border-bright);
+      box-shadow: 0 8px 30px rgba(0, 242, 254, 0.1);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-card);
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--cyan);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      color: var(--text-dim);
+    }
+
+    /* Panel 1: Telemetry & Stepper */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .telemetry-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    .telemetry-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 2px;
+    }
+
+    .telemetry-value {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stepper-container {
+      margin-top: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .stepper-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .stepper-progress-bar {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .stepper-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--cyan), var(--emerald));
+      box-shadow: 0 0 10px var(--cyan-glow);
+      transition: width 0.4s ease;
+    }
+
+    .stepper-steps {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .step-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid var(--bg-panel-solid);
+      transition: all 0.3s;
+    }
+
+    .step-node.active .step-dot {
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan-glow);
+    }
+
+    .step-node.active {
+      color: var(--cyan);
+      font-weight: 600;
+    }
+
+    /* Panel 2: Camera Feed HUD */
+    .camera-feed-box {
+      position: relative;
+      width: 100%;
+      flex: 1;
+      background: #020408;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-card);
+    }
+
+    #camera-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .camera-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .camera-hud-overlay {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .hud-tag {
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--cyan);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+    }
+
+    /* Panel 3: Tactical Arena Map */
+    .map-container {
+      position: relative;
+      width: 100%;
+      flex: 1;
+      background: #020408;
+      border-radius: 8px;
+      border: 1px solid var(--border-card);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #arena-canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .map-telemetry-badge {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      background: rgba(3, 6, 12, 0.8);
+      backdrop-filter: blur(4px);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--cyan);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* Panel 4: Memory Vault */
+    .memory-controls {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      color: #fff;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      outline: none;
+      min-width: 0;
+    }
+
+    .search-input:focus {
+      border-color: var(--cyan);
+    }
+
+    .filter-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      color: var(--text-dim);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active {
+      background: rgba(0, 242, 254, 0.15);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .memory-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 4px;
+    }
+
+    .memory-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .memory-card:hover {
+      background: var(--bg-panel-hover);
+      border-color: var(--border-bright);
+    }
+
+    .memory-card.superseded {
+      opacity: 0.45;
+      border-style: dashed;
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .memory-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .memory-class {
+      font-weight: 600;
+      font-size: 12px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .memory-meta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .status-pill {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .pill-active {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--emerald);
+      border: 1px solid var(--emerald);
+    }
+
+    .pill-superseded {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--amber);
+      border: 1px solid var(--amber);
+      text-decoration: line-through;
+    }
+
+    .btn-nav-memory {
+      background: rgba(0, 242, 254, 0.12);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .btn-nav-memory:hover {
+      background: var(--cyan);
+      color: #000;
+      box-shadow: 0 0 10px var(--cyan-glow);
+    }
+
+    /* Panel 5: Mission Command Terminal */
+    .terminal-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      gap: 8px;
+    }
+
+    .terminal-output {
+      flex: 1;
+      background: #03060c;
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .term-msg { line-height: 1.35; word-break: break-word; }
+    .term-prompt { color: var(--cyan); }
+    .term-reason { color: var(--amber); }
+    .term-llm { color: var(--emerald); font-style: italic; }
+    .term-err { color: var(--crimson); }
+
+    .quick-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .chip {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      font-size: 10px;
+      color: var(--text-dim);
+      padding: 2px 7px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .terminal-form {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .cmd-input {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      outline: none;
+      min-width: 0;
+    }
+
+    .cmd-input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan-glow);
+    }
+
+    .btn-exec {
+      background: linear-gradient(135deg, var(--cyan), var(--electric-blue));
+      color: #030712;
+      font-weight: 700;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      transition: transform 0.1s, box-shadow 0.2s;
+      flex-shrink: 0;
+    }
+
+    .btn-exec:hover {
+      box-shadow: 0 0 14px var(--cyan-glow);
+      transform: translateY(-1px);
+    }
+
+    /* Panel 6: Notification Panel */
+    .event-log {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 4px;
+    }
+
+    .event-item {
+      background: var(--bg-card);
+      border-left: 3px solid var(--cyan);
+      border-radius: 0 6px 6px 0;
+      padding: 6px 8px;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .event-item.warning, .event-item.conflict {
+      border-left-color: var(--amber);
+      background: rgba(245, 158, 11, 0.06);
+    }
+
+    .event-item.error {
+      border-left-color: var(--crimson);
+      background: rgba(239, 68, 68, 0.06);
+    }
+
+    .event-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--cyan);
+    }
+
+    .event-item.conflict .event-header { color: var(--amber); }
+    .event-item.error .event-header { color: var(--crimson); }
+
+    .event-detail {
+      color: var(--text-dim);
+      font-size: 10.5px;
+      line-height: 1.3;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+    ::-webkit-scrollbar-thumb { background: rgba(0, 242, 254, 0.25); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0, 242, 254, 0.6); }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">Δ</div>
+      <div class="brand-text">
+        <h1>AEMS Mission Control</h1>
+        <span>Adaptive Episodic Memory System // TB3 Waffle</span>
+      </div>
+    </div>
+    <div class="header-status">
+      <div class="pulse-badge" id="conn-badge">
+        <span class="dot"></span>
+        <span id="conn-text">System Online</span>
+      </div>
+      <div class="sys-clock" id="sys-clock">UTC 00:00:00</div>
+    </div>
+  </header>
+
+  <!-- 6-Panel Clean 3x2 Grid -->
+  <div class="dashboard-grid">
+
+    <!-- PANEL 1: Status & Telemetry Overview -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>❖</span> System Telemetry & Mission
+        </div>
+        <span class="panel-badge">ROS2 Jazzy</span>
+      </div>
+
+      <div class="telemetry-grid">
+        <div class="telemetry-card">
+          <div class="telemetry-label">Robot Coordinates</div>
+          <div class="telemetry-value" id="val-pos">0.00, 7.00 m</div>
+        </div>
+        <div class="telemetry-card">
+          <div class="telemetry-label">Heading (Yaw)</div>
+          <div class="telemetry-value" id="val-yaw">-90.0°</div>
+        </div>
+        <div class="telemetry-card">
+          <div class="telemetry-label">Active Landmarks</div>
+          <div class="telemetry-value" id="val-landmarks">--</div>
+        </div>
+        <div class="telemetry-card">
+          <div class="telemetry-label">Active Sightings</div>
+          <div class="telemetry-value" id="val-sightings">--</div>
+        </div>
+      </div>
+
+      <div class="stepper-container">
+        <div class="stepper-header">
+          <span id="task-stage-label">Phase: Idle / Ready</span>
+          <span id="task-pct" style="color: var(--cyan); font-family: var(--font-mono);">0%</span>
+        </div>
+        <div class="stepper-progress-bar">
+          <div class="stepper-fill" id="task-fill"></div>
+        </div>
+        <div class="stepper-steps">
+          <div class="step-node active" id="st-1">
+            <div class="step-dot"></div>
+            <span>Query</span>
+          </div>
+          <div class="step-node" id="st-2">
+            <div class="step-dot"></div>
+            <span>Cost</span>
+          </div>
+          <div class="step-node" id="st-3">
+            <div class="step-dot"></div>
+            <span>Nav2</span>
+          </div>
+          <div class="step-node" id="st-4">
+            <div class="step-dot"></div>
+            <span>Corroborate</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 2: Live Perception Camera Feed -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>⬡</span> Live Perception HUD
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <span class="panel-badge" id="camera-fps">0 FPS</span>
+          <span class="panel-badge" style="color: var(--emerald);">YOLOv8</span>
+        </div>
+      </div>
+      <div class="camera-feed-box">
+        <div class="camera-hud-overlay">
+          <span class="hud-tag">/aems/annotated_image</span>
+          <span class="hud-tag">LIVE</span>
+        </div>
+        <img id="camera-img" style="display: none;" alt="Perception Feed">
+        <div class="camera-placeholder" id="camera-standby">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+          <span>Waiting for Perception Stream...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 3: Tactical Arena Navigation Map -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>⊕</span> Tactical Arena Map
+        </div>
+        <span class="panel-badge">Global Plan: /plan</span>
+      </div>
+      <div class="map-container">
+        <canvas id="arena-canvas" width="401" height="399"></canvas>
+        <div class="map-telemetry-badge" id="map-coords">CURSOR: (0.00, 0.00)</div>
+      </div>
+    </div>
+
+    <!-- PANEL 4: Episodic Memory Vault & Task History -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title" style="gap: 12px;">
+          <span id="tab-memories-btn" style="cursor: pointer; color: var(--cyan); border-bottom: 2px solid var(--cyan); padding-bottom: 2px;" onclick="switchVaultTab('memories')">⌗ Memory Vault</span>
+          <span id="tab-tasks-btn" style="cursor: pointer; color: var(--text-dim); padding-bottom: 2px;" onclick="switchVaultTab('tasks')">📋 Task History</span>
+        </div>
+        <span class="panel-badge" id="memory-count-badge">0 Entries</span>
+      </div>
+
+      <!-- Tab 1: Memory Vault View -->
+      <div id="vault-memories-view" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+        <div class="memory-controls">
+          <input type="text" class="search-input" id="memory-search" placeholder="Search (e.g. couch, person)...">
+          <button class="filter-btn active" id="filter-all" onclick="setMemoryFilter('all')">All</button>
+          <button class="filter-btn" id="filter-active" onclick="setMemoryFilter('active')">Active</button>
+          <button class="filter-btn" id="filter-superseded" onclick="setMemoryFilter('superseded')">Superseded</button>
+        </div>
+        <div class="memory-list" id="memory-list-container">
+          <div style="text-align: center; color: var(--text-muted); font-size: 11px; margin-top: 40px;">
+            Synchronizing memory database...
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Task History View -->
+      <div id="vault-tasks-view" style="display: none; flex-direction: column; flex: 1; overflow: hidden;">
+        <div class="memory-controls">
+          <input type="text" class="search-input" id="task-search" placeholder="Filter tasks (e.g. couch, SUCCESS, direct)...">
+          <button class="filter-btn active" id="filter-task-all" onclick="setTaskFilter('all')">All</button>
+          <button class="filter-btn" id="filter-task-success" onclick="setTaskFilter('success')">Success</button>
+          <button class="filter-btn" id="filter-task-fail" onclick="setTaskFilter('fail')">Failed</button>
+        </div>
+        <div class="memory-list" id="task-list-container">
+          <div style="text-align: center; color: var(--text-muted); font-size: 11px; margin-top: 40px;">
+            No task execution history yet.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 5: Mission Command Terminal -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>⌘</span> Mission Command Terminal
+        </div>
+        <span class="panel-badge">LLM Reasoner</span>
+      </div>
+      <div class="terminal-container">
+        <div class="terminal-output" id="term-output">
+          <div class="term-msg term-prompt">[AEMS MISSION CONTROL INITIALIZED]</div>
+          <div class="term-msg" style="color: var(--text-dim);">Ready for natural language queries and navigation commands.</div>
+        </div>
+        <div class="quick-chips">
+          <span class="chip" onclick="setPrompt('Find the couch')">🔍 Find couch</span>
+          <span class="chip" onclick="setPrompt('Navigate to person')">📍 Go to person</span>
+          <span class="chip" onclick="setPrompt('Where was chair last seen?')">❓ Where chair</span>
+          <span class="chip" onclick="setPrompt('Go to fire hydrant')">🚒 Fire hydrant</span>
+        </div>
+        <form class="terminal-form" onsubmit="submitCommand(event)">
+          <input type="text" class="cmd-input" id="cmd-input" placeholder="Enter NL command (e.g. 'Navigate to the couch')..." autocomplete="off">
+          <button type="submit" class="btn-exec">SEND</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- PANEL 6: Notification Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>⚠</span> System Notification Feed
+        </div>
+        <span class="panel-badge" id="event-count-badge">1 Events</span>
+      </div>
+      <div class="event-log" id="events-container">
+        <div class="event-item info">
+          <div class="event-header">
+            <span>SYSTEM_BOOT</span>
+            <span>00:00:00</span>
+          </div>
+          <div class="event-detail">AEMS web bridge listener connected to ROS 2.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const WS_URL = `ws://${window.location.hostname || 'localhost'}:9090`;
+    let ws = null;
+    let memoriesData = [];
+    let taskHistoryData = []; // task_history records from DB
+    let landmarksData = [];   // canonical landmark nodes from DB
+    let edgesData = [];       // landmark_edges from DB for topology drawing
+    let currentFilter = 'all';
+    let currentTaskFilter = 'all';
+    let activeVaultTab = 'memories';
+    let robotPose = { x: 0.0, y: 7.0, yaw: -1.571 };
+    let currentPlan = [];
+    let activeRoute = [];     // multi-hop route coords being replayed
+    let frameCount = 0;
+    let lastFpsTime = Date.now();
+
+    const MAP_RES = 0.05;
+    const MAP_ORIGIN_X = -10.0;
+    const MAP_ORIGIN_Y = -10.0;
+    const MAP_W = 401;
+    const MAP_H = 399;
+
+    // Interior wall segments from arena.sdf (world-frame endpoints)
+    const INTERIOR_WALLS = [
+      { x1: 3-2*Math.cos(0.785), y1: 4-2*Math.sin(0.785), x2: 3+2*Math.cos(0.785), y2: 4+2*Math.sin(0.785) },
+      { x1: -4, y1: 3.25, x2: -4, y2: 6.75 },
+      { x1: -5-2.5*Math.cos(0.5), y1: -4+2.5*Math.sin(0.5), x2: -5+2.5*Math.cos(0.5), y2: -4-2.5*Math.sin(0.5) },
+      { x1: 2.75, y1: -5, x2: 7.25, y2: -5 },
+    ];
+
+    const LANDMARK_COLORS = {
+      'car':'#f59e0b','suv':'#f59e0b','truck':'#f59e0b',
+      'person':'#10b981','human':'#10b981',
+      'fire hydrant':'#ef4444','hydrant':'#ef4444',
+      'couch':'#a855f7','sofa':'#a855f7',
+      'dining table':'#3b82f6','table':'#3b82f6',
+      'chair':'#06b6d4',
+    };
+
+    const mapImg = new Image();
+    mapImg.src = 'arena_map.png';
+    const canvas = document.getElementById('arena-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      const el = document.getElementById('sys-clock');
+      if (el) el.innerText = 'UTC ' + timeStr;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    function connectWS() {
+      const badge = document.getElementById('conn-badge');
+      const text = document.getElementById('conn-text');
+
+      ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        badge.classList.remove('offline');
+        text.innerText = 'System Online';
+      };
+
+      ws.onclose = () => {
+        badge.classList.add('offline');
+        text.innerText = 'Bridge Offline';
+        setTimeout(connectWS, 2000);
+      };
+
+      ws.onerror = () => {
+        badge.classList.add('offline');
+        text.innerText = 'Connection Error';
+      };
+
+      ws.onmessage = (evt) => {
+        try {
+          const payload = JSON.parse(evt.data);
+          handleRosMessage(payload.topic, payload.msg);
+        } catch (e) {
+          console.error(e);
+        }
+      };
+    }
+
+    function handleRosMessage(topic, msg) {
+      if (!msg) return;
+
+      if (topic === '/amcl_pose') {
+        robotPose = msg;
+        const dispX = Math.abs(msg.x) < 0.03 ? 0.0 : msg.x;
+        const dispY = Math.abs(msg.y - 7.0) < 0.03 ? 7.0 : msg.y;
+        const deg = (msg.yaw * 180 / Math.PI);
+        const dispDeg = Math.abs(deg - (-90.0)) < 1.5 ? -90.0 : deg;
+        document.getElementById('val-pos').innerText = `${dispX.toFixed(2)}, ${dispY.toFixed(2)} m`;
+        document.getElementById('val-yaw').innerText = `${dispDeg.toFixed(1)}°`;
+        renderMap();
+      }
+
+      else if (topic === '/plan') {
+        currentPlan = msg.poses || [];
+        renderMap();
+      }
+      else if (topic === '/aems/annotated_image') {
+        const imgElem = document.getElementById('camera-img');
+        const standby = document.getElementById('camera-standby');
+        imgElem.src = 'data:image/jpeg;base64,' + msg.data;
+        imgElem.style.display = 'block';
+        standby.style.display = 'none';
+
+        frameCount++;
+        const now = Date.now();
+        if (now - lastFpsTime >= 1000) {
+          document.getElementById('camera-fps').innerText = frameCount + ' FPS';
+          frameCount = 0;
+          lastFpsTime = now;
+        }
+      }
+      else if (topic === '/aems/memories_json') {
+        memoriesData = msg;
+        renderMemories();
+        document.getElementById('val-sightings').innerText = msg.filter(m => !m.superseded).length;
+        renderMap();
+      }
+      else if (topic === '/aems/db_snapshot') {
+        if (msg.memories) {
+          memoriesData = msg.memories;
+          renderMemories();
+          document.getElementById('val-sightings').innerText = msg.memories.filter(m => !m.superseded).length;
+        }
+        if (msg.landmarks) {
+          landmarksData = msg.landmarks;
+          document.getElementById('val-landmarks').innerText = msg.landmarks.length;
+        }
+        if (msg.edges) {
+          edgesData = msg.edges;
+        }
+        if (msg.task_history) {
+          taskHistoryData = msg.task_history;
+          renderTasks();
+        }
+        renderMap();
+      }
+      else if (topic === '/aems/status') {
+        if (msg.landmarks !== undefined) document.getElementById('val-landmarks').innerText = msg.landmarks;
+      }
+      else if (topic === '/aems/task_status') {
+        updateTaskStepper(msg.stage, msg.detail, msg.progress);
+      }
+      else if (topic === '/aems/command_response') {
+        handleCommandResponse(msg);
+      }
+      else if (topic === '/aems/events') {
+        addSystemEvent(msg);
+      }
+    }
+
+    function updateTaskStepper(stage, detail, progress) {
+      document.getElementById('task-stage-label').innerText = `Phase: ${stage} (${detail})`;
+      document.getElementById('task-pct').innerText = `${progress}%`;
+      document.getElementById('task-fill').style.width = `${progress}%`;
+
+      const s1 = document.getElementById('st-1');
+      const s2 = document.getElementById('st-2');
+      const s3 = document.getElementById('st-3');
+      const s4 = document.getElementById('st-4');
+
+      [s1, s2, s3, s4].forEach(s => s.classList.remove('active'));
+
+      if (progress >= 20) s1.classList.add('active');
+      if (progress >= 40) s2.classList.add('active');
+      if (progress >= 60) s3.classList.add('active');
+      if (progress >= 95) s4.classList.add('active');
+    }
+
+    function setPrompt(text) {
+      document.getElementById('cmd-input').value = text;
+    }
+
+    function submitCommand(e) {
+      e.preventDefault();
+      const input = document.getElementById('cmd-input');
+      const cmd = input.value.trim();
+      if (!cmd || !ws) return;
+
+      addTerminalMessage(`> ${cmd}`, 'term-prompt');
+      ws.send(JSON.stringify({
+        op: 'publish',
+        topic: '/aems/nl_command',
+        msg: { data: cmd },
+        command: cmd
+      }));
+      input.value = '';
+    }
+
+    function handleCommandResponse(resp) {
+      if (resp.status === 'error') {
+        addTerminalMessage(`[ERR] ${resp.explanation}`, 'term-err');
+      } else {
+        addTerminalMessage(`[DECISION] Action: ${resp.action.toUpperCase()}`, 'term-reason');
+        addTerminalMessage(`[LLM REASONER] "${resp.explanation}"`, 'term-llm');
+      }
+    }
+
+    function addTerminalMessage(text, className) {
+      const term = document.getElementById('term-output');
+      const el = document.createElement('div');
+      el.className = `term-msg ${className || ''}`;
+      el.innerText = text;
+      term.appendChild(el);
+      term.scrollTop = term.scrollHeight;
+    }
+
+    function switchVaultTab(tab) {
+      activeVaultTab = tab;
+      const memView = document.getElementById('vault-memories-view');
+      const taskView = document.getElementById('vault-tasks-view');
+      const memBtn = document.getElementById('tab-memories-btn');
+      const taskBtn = document.getElementById('tab-tasks-btn');
+
+      if (tab === 'memories') {
+        memView.style.display = 'flex';
+        taskView.style.display = 'none';
+        memBtn.style.color = 'var(--cyan)';
+        memBtn.style.borderBottom = '2px solid var(--cyan)';
+        taskBtn.style.color = 'var(--text-dim)';
+        taskBtn.style.borderBottom = 'none';
+        renderMemories();
+      } else {
+        memView.style.display = 'none';
+        taskView.style.display = 'flex';
+        taskBtn.style.color = 'var(--cyan)';
+        taskBtn.style.borderBottom = '2px solid var(--cyan)';
+        memBtn.style.color = 'var(--text-dim)';
+        memBtn.style.borderBottom = 'none';
+        renderTasks();
+      }
+    }
+
+    function setTaskFilter(f) {
+      currentTaskFilter = f;
+      ['all', 'success', 'fail'].forEach(t => {
+        const btn = document.getElementById(`filter-task-${t}`);
+        if (btn) btn.classList.remove('active');
+      });
+      const activeBtn = document.getElementById(`filter-task-${f}`);
+      if (activeBtn) activeBtn.classList.add('active');
+      renderTasks();
+    }
+
+    document.getElementById('task-search').addEventListener('input', renderTasks);
+
+    function renderTasks() {
+      const container = document.getElementById('task-list-container');
+      const q = (document.getElementById('task-search')?.value || '').toLowerCase();
+
+      const filtered = taskHistoryData.filter(t => {
+        const textMatch = (t.command || '').toLowerCase().includes(q) ||
+                          (t.strategy || '').toLowerCase().includes(q) ||
+                          (t.outcome || '').toLowerCase().includes(q);
+        if (!textMatch) return false;
+        if (currentTaskFilter === 'success') return (t.outcome || '').includes('SUCCESS');
+        if (currentTaskFilter === 'fail') return !(t.outcome || '').includes('SUCCESS');
+        return true;
+      });
+
+      if (activeVaultTab === 'tasks') {
+        document.getElementById('memory-count-badge').innerText = `${filtered.length} Tasks`;
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 11px; margin-top: 30px;">No task history records match.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(t => {
+        const isSuccess = (t.outcome || '').includes('SUCCESS');
+        const pillClass = isSuccess ? 'pill-active' : 'pill-superseded';
+        const cardClass = isSuccess ? 'memory-card' : 'memory-card superseded';
+
+        return `
+          <div class="${cardClass}">
+            <div class="memory-info" style="flex: 1;">
+              <div class="memory-class">
+                <span>#${t.task_id} ${t.command}</span>
+                <span class="status-pill ${pillClass}">${t.outcome}</span>
+              </div>
+              <div class="memory-meta">
+                Strategy: ${t.strategy || 'direct'} | Duration: ${t.duration}s | Goal: ${t.goal_pos || '--'}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setMemoryFilter(f) {
+      currentFilter = f;
+      document.querySelectorAll('#vault-memories-view .filter-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`filter-${f}`).classList.add('active');
+      renderMemories();
+    }
+
+    document.getElementById('memory-search').addEventListener('input', renderMemories);
+
+    function renderMemories() {
+      const container = document.getElementById('memory-list-container');
+      const q = document.getElementById('memory-search').value.toLowerCase();
+      
+      const filtered = memoriesData.filter(m => {
+        const matchesClass = m.object_class.toLowerCase().includes(q);
+        if (!matchesClass) return false;
+        if (currentFilter === 'active') return !m.superseded;
+        if (currentFilter === 'superseded') return m.superseded;
+        return true;
+      });
+
+      document.getElementById('memory-count-badge').innerText = `${filtered.length} Records`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 11px; margin-top: 30px;">No memory entries match.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(m => {
+        const statusClass = m.superseded ? 'pill-superseded' : 'pill-active';
+        const statusText = m.superseded ? 'SUPERSEDED' : 'ACTIVE';
+        const cardClass = m.superseded ? 'memory-card superseded' : 'memory-card';
+        const corrTag = m.corroboration_count > 1 ? `<span style="color: var(--cyan); font-size: 9px;">(${m.corroboration_count}×)</span>` : '';
+
+        return `
+          <div class="${cardClass}">
+            <div class="memory-info">
+              <div class="memory-class">
+                <span>${m.object_class.toUpperCase()}</span>
+                <span class="status-pill ${statusClass}">${statusText}</span>
+                ${corrTag}
+              </div>
+              <div class="memory-meta">
+                (${m.pos_x}, ${m.pos_y}) | Conf: ${(m.confidence * 100).toFixed(0)}%
+              </div>
+            </div>
+            ${!m.superseded ? `
+              <button class="btn-nav-memory" onclick="sendNavGoal('${m.object_class}', ${m.pos_x}, ${m.pos_y})">
+                GO TO
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function sendNavGoal(cls, x, y) {
+      setPrompt(`Navigate to ${cls}`);
+      document.querySelector('.terminal-form').dispatchEvent(new Event('submit'));
+    }
+
+    function addSystemEvent(evt) {
+      const container = document.getElementById('events-container');
+      const el = document.createElement('div');
+      
+      let itemClass = 'info';
+      const evName = evt.event || 'EVENT';
+      if (evName.includes('CONFLICT') || evName.includes('SUPERSEDED')) itemClass = 'conflict';
+      else if (evName.includes('FAIL') || evName.includes('ABORT') || evt.severity === 'error') itemClass = 'error';
+      else if (evName.includes('FALLBACK') || evt.severity === 'warning') itemClass = 'warning';
+
+      const timeStr = new Date().toTimeString().split(' ')[0];
+      el.className = `event-item ${itemClass}`;
+      el.innerHTML = `
+        <div class="event-header">
+          <span>${evName}</span>
+          <span>${timeStr}</span>
+        </div>
+        <div class="event-detail">${evt.detail || JSON.stringify(evt)}</div>
+      `;
+
+      container.insertBefore(el, container.firstChild);
+      const count = container.children.length;
+      document.getElementById('event-count-badge').innerText = `${count} Events`;
+    }
+
+    function worldToMapPixel(wx, wy) {
+      const px = (wx - MAP_ORIGIN_X) / MAP_RES;
+      const py = MAP_H - ((wy - MAP_ORIGIN_Y) / MAP_RES);
+      return { x: px, y: py };
+    }
+
+    function mapPixelToWorld(px, py) {
+      const wx = px * MAP_RES + MAP_ORIGIN_X;
+      const wy = (MAP_H - py) * MAP_RES + MAP_ORIGIN_Y;
+      return { x: wx, y: wy };
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const px = (e.clientX - rect.left) * scaleX;
+      const py = (e.clientY - rect.top) * scaleY;
+      const w = mapPixelToWorld(px, py);
+      document.getElementById('map-coords').innerText = `CURSOR: (${w.x.toFixed(2)}, ${w.y.toFixed(2)})`;
+    });
+
+    function renderMap() {
+      ctx.clearRect(0, 0, MAP_W, MAP_H);
+
+      // ── 1. Background: arena floor ──────────────────────────────────────────
+      if (mapImg.complete && mapImg.naturalWidth !== 0) {
+        ctx.drawImage(mapImg, 0, 0, MAP_W, MAP_H);
+      } else {
+        // Draw a tactical grid floor when no .png is available
+        ctx.fillStyle = '#070d1a';
+        ctx.fillRect(0, 0, MAP_W, MAP_H);
+
+        // Grid lines
+        ctx.strokeStyle = 'rgba(0,242,254,0.06)';
+        ctx.lineWidth = 0.5;
+        for (let wx = -10; wx <= 10; wx += 2) {
+          const p = worldToMapPixel(wx, 0);
+          ctx.beginPath(); ctx.moveTo(p.x, 0); ctx.lineTo(p.x, MAP_H); ctx.stroke();
+        }
+        for (let wy = -10; wy <= 10; wy += 2) {
+          const p = worldToMapPixel(0, wy);
+          ctx.beginPath(); ctx.moveTo(0, p.y); ctx.lineTo(MAP_W, p.y); ctx.stroke();
+        }
+
+        // Axis labels
+        ctx.fillStyle = 'rgba(0,242,254,0.25)';
+        ctx.font = '8px Fira Code';
+        for (let v = -8; v <= 8; v += 4) {
+          const px = worldToMapPixel(v, -9.5);
+          const py = worldToMapPixel(-9.5, v);
+          ctx.fillText(v, px.x - 5, px.y + 3);
+          ctx.fillText(v, py.x + 2, py.y + 3);
+        }
+      }
+
+      // ── 2. Outer arena boundary ─────────────────────────────────────────────
+      const tl = worldToMapPixel(-10, 10);
+      const br = worldToMapPixel(10, -10);
+      ctx.strokeStyle = 'rgba(0,242,254,0.55)';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(0,242,254,0.4)';
+      ctx.shadowBlur = 6;
+      ctx.strokeRect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+      ctx.shadowBlur = 0;
+
+      // ── 3. Interior walls ───────────────────────────────────────────────────
+      ctx.strokeStyle = 'rgba(148,163,184,0.75)';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = 'rgba(255,255,255,0.2)';
+      ctx.shadowBlur = 4;
+      ctx.lineCap = 'round';
+      INTERIOR_WALLS.forEach(w => {
+        const a = worldToMapPixel(w.x1, w.y1);
+        const b = worldToMapPixel(w.x2, w.y2);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      });
+      ctx.shadowBlur = 0;
+      ctx.lineCap = 'butt';
+
+      // ── 4. Topological graph edges (real DB edges) ──────────────────────────
+      if (edgesData.length > 0 && landmarksData.length > 1) {
+        const lmById = {};
+        landmarksData.forEach(lm => { lmById[lm.id] = lm; });
+        const drawnPairs = new Set();
+        edgesData.forEach(e => {
+          const key = [Math.min(e.from_id, e.to_id), Math.max(e.from_id, e.to_id)].join('-');
+          if (drawnPairs.has(key)) return;
+          drawnPairs.add(key);
+          const a = lmById[e.from_id];
+          const b = lmById[e.to_id];
+          if (!a || !b) return;
+          const pa = worldToMapPixel(a.pos_x, a.pos_y);
+          const pb = worldToMapPixel(b.pos_x, b.pos_y);
+          ctx.beginPath();
+          ctx.moveTo(pa.x, pa.y);
+          ctx.lineTo(pb.x, pb.y);
+          ctx.strokeStyle = 'rgba(59,130,246,0.35)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([5, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          // Distance label at midpoint
+          const mx = (pa.x + pb.x) / 2;
+          const my = (pa.y + pb.y) / 2;
+          ctx.fillStyle = 'rgba(59,130,246,0.65)';
+          ctx.font = '7px Fira Code';
+          ctx.textAlign = 'center';
+          ctx.fillText(e.distance.toFixed(1) + 'm', mx, my - 2);
+          ctx.textAlign = 'left';
+        });
+      } else if (landmarksData.length > 1) {
+        // Fallback: draw edges by proximity if DB edges haven't arrived yet
+        for (let i = 0; i < landmarksData.length; i++) {
+          for (let j = i + 1; j < landmarksData.length; j++) {
+            const a = landmarksData[i], b = landmarksData[j];
+            const dist = Math.hypot(a.pos_x - b.pos_x, a.pos_y - b.pos_y);
+            if (dist < 17) {
+              const pa = worldToMapPixel(a.pos_x, a.pos_y);
+              const pb = worldToMapPixel(b.pos_x, b.pos_y);
+              ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
+              ctx.strokeStyle = 'rgba(59,130,246,0.2)';
+              ctx.lineWidth = 1; ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]);
+            }
+          }
+        }
+      }
+
+      // ── 5. Nav2 active plan path ────────────────────────────────────────────
+      if (currentPlan && currentPlan.length > 1) {
+        ctx.beginPath();
+        const start = worldToMapPixel(currentPlan[0].x, currentPlan[0].y);
+        ctx.moveTo(start.x, start.y);
+        for (let i = 1; i < currentPlan.length; i++) {
+          const pt = worldToMapPixel(currentPlan[i].x, currentPlan[i].y);
+          ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.strokeStyle = '#00f2fe';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = 'rgba(0,242,254,0.8)';
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      // ── 6. Landmark node circles with confidence ring + labels ──────────────
+      landmarksData.forEach(lm => {
+        const pt = worldToMapPixel(lm.pos_x, lm.pos_y);
+        const color = LANDMARK_COLORS[lm.class_name] || '#94a3b8';
+        const conf = Math.min(lm.confidence_score, 1.0);
+        const R = 9;
+
+        // Confidence ring (arc) — full ring = 100% conf
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, R + 4, -Math.PI/2, -Math.PI/2 + 2*Math.PI*conf);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Background fill circle
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, R, 0, 2*Math.PI);
+        ctx.fillStyle = '#0d1526';
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Class name label
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 8px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(lm.class_name.replace('dining ', 'din.'), pt.x, pt.y - 14);
+
+        // Confidence % small tag
+        ctx.fillStyle = color;
+        ctx.font = '7px Fira Code';
+        ctx.fillText((conf * 100).toFixed(0) + '%', pt.x, pt.y + 18);
+
+        // Short class abbreviation inside circle
+        ctx.fillStyle = color;
+        ctx.font = 'bold 7px Inter, sans-serif';
+        const abbr = lm.class_name.substring(0, 3).toUpperCase();
+        ctx.fillText(abbr, pt.x, pt.y + 2.5);
+        ctx.textAlign = 'left';
+      });
+
+      // ── 7. Memory sighting dots (non-canonical observations) ────────────────
+      memoriesData.forEach(m => {
+        // Skip if there's already a canonical landmark at this position (within 1.5m)
+        const nearLandmark = landmarksData.some(lm =>
+          Math.hypot(lm.pos_x - m.pos_x, lm.pos_y - m.pos_y) < 1.5
+        );
+        if (nearLandmark) return;
+
+        const pt = worldToMapPixel(m.pos_x, m.pos_y);
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, m.superseded ? 3 : 5, 0, 2*Math.PI);
+        ctx.fillStyle = m.superseded ? 'rgba(245,158,11,0.4)' : 'rgba(16,185,129,0.6)';
+        ctx.fill();
+        ctx.strokeStyle = m.superseded ? '#f59e0b' : '#10b981';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+
+      // ── 8. Robot (cyber chassis) ─────────────────────────────────────────────
+      const rpt = worldToMapPixel(robotPose.x, robotPose.y);
+      ctx.save();
+      ctx.translate(rpt.x, rpt.y);
+      ctx.rotate(-robotPose.yaw);
+
+      // Vision cone
+      const coneGrad = ctx.createRadialGradient(0, 0, 4, 18, 0, 32);
+      coneGrad.addColorStop(0, 'rgba(0,242,254,0.45)');
+      coneGrad.addColorStop(0.7, 'rgba(0,242,254,0.15)');
+      coneGrad.addColorStop(1, 'rgba(0,242,254,0.0)');
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, 32, -0.55, 0.55);
+      ctx.closePath();
+      ctx.fillStyle = coneGrad;
+      ctx.fill();
+
+      // Headlights
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.shadowColor = '#00f2fe';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(7, -4, 1.8, 0, 2*Math.PI);
+      ctx.arc(7,  4, 1.8, 0, 2*Math.PI);
+      ctx.fill();
+
+      // Chassis aura
+      ctx.beginPath();
+      ctx.arc(0, 0, 10.5, 0, 2*Math.PI);
+      ctx.strokeStyle = 'rgba(0,242,254,0.4)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Chassis hull
+      ctx.beginPath();
+      ctx.moveTo(8, 0); ctx.lineTo(4, 7); ctx.lineTo(-7, 7);
+      ctx.lineTo(-9, 4); ctx.lineTo(-9, -4); ctx.lineTo(-7, -7);
+      ctx.lineTo(4, -7); ctx.closePath();
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+      ctx.strokeStyle = '#00f2fe';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#00f2fe';
+      ctx.shadowBlur = 10;
+      ctx.stroke();
+
+      // LiDAR dome
+      ctx.beginPath();
+      ctx.arc(-1, 0, 3.5, 0, 2*Math.PI);
+      ctx.fillStyle = '#38bdf8';
+      ctx.shadowColor = '#38bdf8';
+      ctx.shadowBlur = 6;
+      ctx.fill();
+
+      // Forward arrow
+      ctx.beginPath();
+      ctx.moveTo(0, 0); ctx.lineTo(10, 0);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      ctx.restore();
+
+      // ── 9. Legend ───────────────────────────────────────────────────────────
+      const legendItems = [
+        { color: '#3b82f6', label: 'Landmark graph edge' },
+        { color: '#00f2fe', label: 'Nav2 path' },
+        { color: '#94a3b8', label: 'Interior walls' },
+      ];
+      legendItems.forEach((item, i) => {
+        ctx.fillStyle = item.color;
+        ctx.fillRect(6, 6 + i * 14, 12, 4);
+        ctx.fillStyle = 'rgba(255,255,255,0.65)';
+        ctx.font = '8px Inter, sans-serif';
+        ctx.fillText(item.label, 22, 11 + i * 14);
+      });
+    }
+
+    mapImg.onload = renderMap;
+    window.addEventListener('load', () => {
+      connectWS();
+      renderMap();
+    });
+  </script>
+</body>
+</html>
+

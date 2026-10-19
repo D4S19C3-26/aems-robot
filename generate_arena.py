@@ -1,0 +1,151 @@
+import os
+
+SDF_CONTENT = """<?xml version="1.0" ?>
+<sdf version="1.9">
+  <world name="arena_world">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- Point light to help YOLO see textures -->
+    <light type="point" name="point_light_1">
+      <pose>0 0 5 0 0 0</pose>
+      <diffuse>0.7 0.7 0.7 1</diffuse>
+      <attenuation>
+        <range>50</range>
+        <linear>0.05</linear>
+      </attenuation>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- OUTER BOUNDARY (20x20m) -->
+    <model name="outer_walls">
+      <static>true</static>
+      <link name="wall_n">
+        <pose>0 10 1.25 0 0 0</pose>
+        <collision name="c"><geometry><box><size>20.3 0.3 2.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>20.3 0.3 2.5</size></box></geometry></visual>
+      </link>
+      <link name="wall_s">
+        <pose>0 -10 1.25 0 0 0</pose>
+        <collision name="c"><geometry><box><size>20.3 0.3 2.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>20.3 0.3 2.5</size></box></geometry></visual>
+      </link>
+      <link name="wall_e">
+        <pose>10 0 1.25 0 0 0</pose>
+        <collision name="c"><geometry><box><size>0.3 20 2.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.3 20 2.5</size></box></geometry></visual>
+      </link>
+      <link name="wall_w">
+        <pose>-10 0 1.25 0 0 0</pose>
+        <collision name="c"><geometry><box><size>0.3 20 2.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.3 20 2.5</size></box></geometry></visual>
+      </link>
+    </model>
+
+    <!-- INTERIOR OBSTACLES (Scattered) -->
+    <model name="interior_walls">
+      <static>true</static>
+      <link name="iw_1">
+        <pose>3 4 1.25 0 0 0.785</pose>
+        <collision name="c"><geometry><box><size>4 0.2 2.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>4 0.2 2.5</size></box></geometry></visual>
+      </link>
+      <link name="iw_2">
+        <pose>-4 5 1.25 0 0 1.57</pose>
+        <collision name="c"><geometry><box><size>3.5 0.2 2.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>3.5 0.2 2.5</size></box></geometry></visual>
+      </link>
+      <link name="iw_3">
+        <pose>-5 -4 1.25 0 0 -0.5</pose>
+        <collision name="c"><geometry><box><size>5 0.2 2.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>5 0.2 2.5</size></box></geometry></visual>
+      </link>
+      <link name="iw_4">
+        <pose>5 -5 1.25 0 0 0</pose>
+        <collision name="c"><geometry><box><size>4.5 0.2 2.5</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>4.5 0.2 2.5</size></box></geometry></visual>
+      </link>
+    </model>
+
+    <!-- FUEL OBJECTS (Deterministic placement) -->
+    <include>
+      <name>suv</name>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/SUV</uri>
+      <pose>-7 7 0 0 0 -0.7</pose>
+    </include>
+
+    <include>
+      <name>standing_person</name>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Standing person</uri>
+      <pose>7 7 0 0 0 3.14</pose>
+    </include>
+
+    <include>
+      <name>fire_hydrant</name>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Fire Hydrant</uri>
+      <pose>8 0 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>sofa</name>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Sofa</uri>
+      <pose>0 -7 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>dining_table</name>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/DiningTable</uri>
+      <pose>-3 -7 0 0 0 1.57</pose>
+    </include>
+    
+    <include>
+      <name>dining_chair</name>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/DiningChair</uri>
+      <pose>-3 -6 0 0 0 0</pose>
+    </include>
+
+  </world>
+</sdf>
+"""
+
+with open(os.path.expanduser('~/aems_ws/worlds/arena.sdf'), 'w') as f:
+    f.write(SDF_CONTENT)
+
+print("Created arena.sdf successfully.")

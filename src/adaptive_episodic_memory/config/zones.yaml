@@ -1,0 +1,89 @@
+# AEMS Named Zones Configuration
+# Arena coordinates: -10m to +10m x and y
+# Each zone defines:
+#   bounds: [min_x, max_x, min_y, max_y]
+#   center: [x, y]
+#   standoff: [x, y, yaw_rad]
+#   description: Human-readable location description
+#   aliases: Natural language aliases / synonyms
+
+zones:
+  vehicle_bay:
+    bounds: [-10.0, -3.0, 3.0, 10.0]
+    center: [-7.0, 7.0]
+    standoff: [-5.5, 5.5, 2.35]
+    description: "Northwest zone containing the SUV and vehicle service bay"
+    aliases:
+      - "vehicle bay"
+      - "car bay"
+      - "garage"
+      - "parking area"
+      - "suv area"
+      - "northwest zone"
+      - "nw area"
+
+  reception_area:
+    bounds: [3.0, 10.0, 3.0, 10.0]
+    center: [7.0, 7.0]
+    standoff: [5.5, 5.5, 0.78]
+    description: "Northeast zone containing reception and personnel waiting area"
+    aliases:
+      - "reception area"
+      - "reception"
+      - "lobby"
+      - "waiting area"
+      - "person area"
+      - "northeast zone"
+      - "ne area"
+
+  east_corridor:
+    bounds: [3.0, 10.0, -3.0, 3.0]
+    center: [8.0, 0.0]
+    standoff: [6.5, 0.0, 0.0]
+    description: "East central corridor housing the emergency fire hydrant"
+    aliases:
+      - "east corridor"
+      - "hydrant station"
+      - "fire station"
+      - "emergency corridor"
+      - "east hallway"
+      - "east zone"
+
+  seating_area:
+    bounds: [-3.0, 4.0, -10.0, -3.0]
+    center: [0.0, -7.0]
+    standoff: [0.0, -5.2, -1.57]
+    description: "South central lounge containing the sofa and visitor seating"
+    aliases:
+      - "seating area"
+      - "lounge"
+      - "couch area"
+      - "sofa area"
+      - "south lounge"
+      - "living area"
+
+  dining_area:
+    bounds: [-10.0, -4.0, -6.0, 3.0]
+    center: [-8.0, -2.0]
+    standoff: [-6.5, -2.0, 3.14]
+    description: "West central dining zone with conference/dining table"
+    aliases:
+      - "dining area"
+      - "dining room"
+      - "cafeteria"
+      - "table area"
+      - "conference table"
+      - "mess hall"
+
+  study_alcove:
+    bounds: [-6.0, 0.0, -10.0, -4.0]
+    center: [-3.0, -6.0]
+    standoff: [-3.0, -4.5, -1.57]
+    description: "Southwest quiet study alcove with desk chair"
+    aliases:
+      - "study alcove"
+      - "study area"
+      - "alcove"
+      - "chair area"
+      - "reading nook"
+      - "office nook"

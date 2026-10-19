@@ -1,0 +1,370 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <world name="realistic_house">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics" />
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands" />
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster" />
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="house_walls">
+      <static>true</static>
+
+      <link name="living_west">
+        <pose>-6.0 3.5 1.2 0 0 0</pose>
+        <collision name="living_west_col">
+          <geometry><box><size>0.15 4.0 2.4</size></box></geometry>
+        </collision>
+        <visual name="living_west_vis">
+          <geometry><box><size>0.15 4.0 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="living_north">
+        <pose>-3.5 5.5 1.2 0 0 0</pose>
+        <collision name="living_north_col">
+          <geometry><box><size>5.15 0.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="living_north_vis">
+          <geometry><box><size>5.15 0.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="living_east">
+        <pose>-1.0 3.5 1.2 0 0 0</pose>
+        <collision name="living_east_col">
+          <geometry><box><size>0.15 4.0 2.4</size></box></geometry>
+        </collision>
+        <visual name="living_east_vis">
+          <geometry><box><size>0.15 4.0 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="living_south1">
+        <pose>-4.75 1.5 1.2 0 0 0</pose>
+        <collision name="living_south1_col">
+          <geometry><box><size>2.5 0.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="living_south1_vis">
+          <geometry><box><size>2.5 0.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="living_south2">
+        <pose>-1.8 1.5 1.2 0 0 0</pose>
+        <collision name="living_south2_col">
+          <geometry><box><size>1.6 0.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="living_south2_vis">
+          <geometry><box><size>1.6 0.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="kitchen_north">
+        <pose>1.0 5.0 1.2 0 0 0</pose>
+        <collision name="kitchen_north_col">
+          <geometry><box><size>4.15 0.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="kitchen_north_vis">
+          <geometry><box><size>4.15 0.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="kitchen_east">
+        <pose>3.0 3.25 1.2 0 0 0</pose>
+        <collision name="kitchen_east_col">
+          <geometry><box><size>0.15 3.65 2.4</size></box></geometry>
+        </collision>
+        <visual name="kitchen_east_vis">
+          <geometry><box><size>0.15 3.65 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="kitchen_south1">
+        <pose>0.0 1.5 1.2 0 0 0</pose>
+        <collision name="kitchen_south1_col">
+          <geometry><box><size>2.0 0.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="kitchen_south1_vis">
+          <geometry><box><size>2.0 0.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="kitchen_south2">
+        <pose>2.45 1.5 1.2 0 0 0</pose>
+        <collision name="kitchen_south2_col">
+          <geometry><box><size>1.1 0.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="kitchen_south2_vis">
+          <geometry><box><size>1.1 0.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="bathroom_north">
+        <pose>4.25 3.5 1.2 0 0 0</pose>
+        <collision name="bathroom_north_col">
+          <geometry><box><size>2.65 0.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="bathroom_north_vis">
+          <geometry><box><size>2.65 0.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="bathroom_east">
+        <pose>5.5 2.5 1.2 0 0 0</pose>
+        <collision name="bathroom_east_col">
+          <geometry><box><size>0.15 2.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="bathroom_east_vis">
+          <geometry><box><size>0.15 2.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="bathroom_south1">
+        <pose>3.25 1.5 1.2 0 0 0</pose>
+        <collision name="bathroom_south1_col">
+          <geometry><box><size>0.5 0.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="bathroom_south1_vis">
+          <geometry><box><size>0.5 0.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="bathroom_south2">
+        <pose>4.95 1.5 1.2 0 0 0</pose>
+        <collision name="bathroom_south2_col">
+          <geometry><box><size>1.1 0.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="bathroom_south2_vis">
+          <geometry><box><size>1.1 0.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="bedroom_west">
+        <pose>-6.0 -1.75 1.2 0 0 0</pose>
+        <collision name="bedroom_west_col">
+          <geometry><box><size>0.15 3.5 2.4</size></box></geometry>
+        </collision>
+        <visual name="bedroom_west_vis">
+          <geometry><box><size>0.15 3.5 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="bedroom_north1">
+        <pose>-5.0 0.0 1.2 0 0 0</pose>
+        <collision name="bedroom_north1_col">
+          <geometry><box><size>2.0 0.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="bedroom_north1_vis">
+          <geometry><box><size>2.0 0.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="bedroom_north2">
+        <pose>-2.55 0.0 1.2 0 0 0</pose>
+        <collision name="bedroom_north2_col">
+          <geometry><box><size>1.1 0.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="bedroom_north2_vis">
+          <geometry><box><size>1.1 0.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="bedroom_east">
+        <pose>-2.0 -1.75 1.2 0 0 0</pose>
+        <collision name="bedroom_east_col">
+          <geometry><box><size>0.15 3.5 2.4</size></box></geometry>
+        </collision>
+        <visual name="bedroom_east_vis">
+          <geometry><box><size>0.15 3.5 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="bedroom_south">
+        <pose>-4.0 -3.5 1.2 0 0 0</pose>
+        <collision name="bedroom_south_col">
+          <geometry><box><size>4.15 0.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="bedroom_south_vis">
+          <geometry><box><size>4.15 0.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="hallway_south">
+        <pose>1.75 0.0 1.2 0 0 0</pose>
+        <collision name="hallway_south_col">
+          <geometry><box><size>7.65 0.15 2.4</size></box></geometry>
+        </collision>
+        <visual name="hallway_south_vis">
+          <geometry><box><size>7.65 0.15 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="hallway_west">
+        <pose>-6.0 0.75 1.2 0 0 0</pose>
+        <collision name="hallway_west_col">
+          <geometry><box><size>0.15 1.5 2.4</size></box></geometry>
+        </collision>
+        <visual name="hallway_west_vis">
+          <geometry><box><size>0.15 1.5 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <link name="hallway_east">
+        <pose>5.5 0.75 1.2 0 0 0</pose>
+        <collision name="hallway_east_col">
+          <geometry><box><size>0.15 1.5 2.4</size></box></geometry>
+        </collision>
+        <visual name="hallway_east_vis">
+          <geometry><box><size>0.15 1.5 2.4</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.9 1</ambient>
+            <diffuse>0.9 0.9 0.9 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+
+    <include>
+      <name>furniture_0</name>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Sofa</uri>
+      <pose>-3.5 4.0 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>furniture_1</name>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Table</uri>
+      <pose>-3.5 3.0 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>furniture_2</name>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Dining table</uri>
+      <pose>1.0 3.25 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <name>furniture_3</name>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Bed</uri>
+      <pose>-4.0 -2.5 0 0 0 1.5708</pose>
+    </include>
+
+    <include>
+      <name>furniture_4</name>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Cabinet</uri>
+      <pose>4.25 3.0 0 0 0 3.1415</pose>
+    </include>
+
+  </world>
+</sdf>

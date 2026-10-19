@@ -1,0 +1,6 @@
+string target_class
+---
+bool success
+string message
+int32 landmarks_visited
+int32 confirmations_failed

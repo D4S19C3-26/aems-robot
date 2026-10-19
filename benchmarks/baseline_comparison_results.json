@@ -1,0 +1,71 @@
+{
+  "Scenario_1_Static_Target": {
+    "description": "Target remains at previously recorded location (fresh memory)",
+    "metrics": {
+      "Frontier_Exploration": {
+        "mean_latency_s": 196.45,
+        "std_latency_s": 99.15,
+        "mean_distance_m": 37.27,
+        "success_rate_pct": 100.0
+      },
+      "Naive_Static_Memory": {
+        "mean_latency_s": 82.18,
+        "std_latency_s": 2.43,
+        "mean_distance_m": 16.14,
+        "success_rate_pct": 100.0
+      },
+      "AEMS_Proposed": {
+        "mean_latency_s": 65.64,
+        "std_latency_s": 1.94,
+        "mean_distance_m": 14.75,
+        "success_rate_pct": 100.0
+      }
+    }
+  },
+  "Scenario_2_Relocated_Target": {
+    "description": "Target was moved to a different room (spatial conflict)",
+    "metrics": {
+      "Frontier_Exploration": {
+        "mean_latency_s": 197.73,
+        "std_latency_s": 108.26,
+        "mean_distance_m": 37.72,
+        "success_rate_pct": 100.0
+      },
+      "Naive_Static_Memory": {
+        "mean_latency_s": 286.13,
+        "std_latency_s": 94.04,
+        "mean_distance_m": 51.67,
+        "success_rate_pct": 100.0
+      },
+      "AEMS_Proposed": {
+        "mean_latency_s": 43.05,
+        "std_latency_s": 1.23,
+        "mean_distance_m": 9.91,
+        "success_rate_pct": 100.0
+      }
+    }
+  },
+  "Scenario_3_Occluded_Target": {
+    "description": "Target is occluded behind interior partition wall (iw_2)",
+    "metrics": {
+      "Frontier_Exploration": {
+        "mean_latency_s": 192.43,
+        "std_latency_s": 106.89,
+        "mean_distance_m": 37.59,
+        "success_rate_pct": 100.0
+      },
+      "Naive_Static_Memory": {
+        "mean_latency_s": 60.13,
+        "std_latency_s": 1.8,
+        "mean_distance_m": 10.31,
+        "success_rate_pct": 0.0
+      },
+      "AEMS_Proposed": {
+        "mean_latency_s": 29.57,
+        "std_latency_s": 0.89,
+        "mean_distance_m": 6.48,
+        "success_rate_pct": 100.0
+      }
+    }
+  }
+}
