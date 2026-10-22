@@ -26,41 +26,101 @@ AEMS is a complete **robotic episodic memory system** built on **ROS 2 Jazzy** a
 
 ## System Architecture
 
-```
-RGB Camera + 2D LiDAR
-        │
-        ▼
-┌─────────────────────────────┐
-│  YOLOv8 + Camera-LiDAR     │  ← yolo_perception_node.py
-│  Fusion + Spatial Disambig. │    Async 30 FPS HUD overlay
-└────────────┬────────────────┘
-             │ /aems/detections
-             ▼
-┌─────────────────────────────┐
-│  Landmark Manager Node      │  ← landmark_manager_node.py
-│  SQLite Memory Store        │    Topometric graph + FAISS index
-│  FAISS IndexFlatIP          │    all-MiniLM-L6-v2 embeddings
-└────────────┬────────────────┘
-             │ ROS 2 Service
-             ▼
-┌─────────────────────────────┐
-│  Dashboard / Command Node   │  ← dashboard_node.py
-│  - NL command parsing       │    Nav2 Action Client
-│  - Trust-vs-Verify cost     │    Decision-theoretic strategy
-│  - Multi-Room Perimeter     │    selection
-│    Scout                    │
-│  - En-route re-targeting    │
-└────────────┬────────────────┘
-             │ WebSocket
-             ▼
-┌─────────────────────────────┐
-│  Web Dashboard              │  ← aems_web_bridge.py + dashboard/
-│  Live HUD | Memory Map      │    http://localhost:8080
-│  Task Status | Benchmarks   │
-└─────────────────────────────┘
+```mermaid
+flowchart TD
+    classDef sensor fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b;
+    classDef percept fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c;
+    classDef memory fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20;
+    classDef reason fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100;
+    classDef nav fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f;
+    classDef ui fill:#ede7f6,stroke:#512da8,stroke-width:2px,color:#311b92;
+
+    subgraph SENSORS ["1. Physical & Sensor Layer"]
+        CAM["RGB Camera (30 FPS)"]:::sensor
+        LIDAR["2D Laser Scanner (LiDAR)"]:::sensor
+        ODOM["Wheel Odometry & AMCL Pose"]:::sensor
+    end
+
+    subgraph PERCEPTION ["2. Perception & Fusion Layer (yolo_perception_node)"]
+        YOLO["YOLOv8 Object Detection<br/>(320x320 Async Background Worker)"]:::percept
+        FUSION["Camera-LiDAR Pinhole Projection<br/>& Multi-Cluster Occlusion Check"]:::percept
+        DISAMBIG["Nearest-Neighbor Spatial Disambiguation<br/>(Ambiguous Mesh Correction)"]:::percept
+        ANNOT["Live HUD Overlay Annotator<br/>(30 FPS Non-blocking Stream)"]:::percept
+    end
+
+    subgraph MEMORY ["3. Episodic Memory Layer (landmark_manager_node)"]
+        SQLITE[("Persistent SQLite Memory Store<br/>(object_sightings, landmarks, edges)")]:::memory
+        EMBED["Sentence-Transformers<br/>(all-MiniLM-L6-v2 384-d Embeddings)"]:::memory
+        FAISS["FAISS IndexFlatIP Dense Vector Index<br/>(11.67 ms mean over 10k Records)"]:::memory
+        GRAPH["Topometric Graph Anchors<br/>(Landmarks & Edge Traversal)"]:::memory
+    end
+
+    subgraph REASONING ["4. Decision & Reasoning Layer (dashboard_node)"]
+        CMD_IN["User Command / Query Interface"]:::reason
+        SANITIZER["Input Sanitizer & Safety Guard<br/>(SQLi & Metacharacter Rejection)"]:::reason
+        LLM["Groq LLM Reasoning Engine<br/>(Natural Language Memory QA)"]:::reason
+        COST_MODEL{"Decision-Theoretic Cost Engine<br/>Evaluate C_trust vs C_reverify vs C_explore"}:::reason
+    end
+
+    subgraph NAVIGATION ["5. Adaptive Navigation Layer (Nav2 + Dashboard)"]
+        STANDOFF["Obstacle-Aware Standoff Planner<br/>(Raycast Wall Clearance)"]:::nav
+        NAV2["Nav2 Action Client<br/>(Trajectory Controller & DWB)"]:::nav
+        EN_ROUTE{"En-Route Sighting?<br/>(Target Moved > 1.5m)"}:::nav
+        CONFIRM{"Visual Confirmation?<br/>(Conf >= 35%)"}:::nav
+        SCOUT["Perimeter Scout & 360° Sweep<br/>(Multi-Room Occlusion Search)"]:::nav
+        CORROB["Memory Update & Corroboration<br/>(Positive Boost or Decay Penalty)"]:::nav
+    end
+
+    subgraph DASHBOARD ["6. Mission Control UI (aems_web_bridge)"]
+        WEB_UI["Web Dashboard UI (:8080)<br/>Live HUD, Robot Pose, Memory Table, Mission Log"]:::ui
+    end
+
+    %% Flow Connections
+    CAM --> YOLO
+    LIDAR --> FUSION
+    ODOM --> FUSION
+    YOLO --> FUSION
+    FUSION --> DISAMBIG
+    DISAMBIG --> ANNOT
+    DISAMBIG -->|/aems/detections| SQLITE
+    SQLITE --> EMBED
+    EMBED --> FAISS
+    SQLITE --> GRAPH
+
+    CMD_IN --> SANITIZER
+    SANITIZER -->|Natural Language Query| LLM
+    LLM --> FAISS
+    LLM --> WEB_UI
+
+    SANITIZER -->|Navigation Command| COST_MODEL
+    COST_MODEL -->|C_trust <= C_reverify| STANDOFF
+    COST_MODEL -->|C_reverify < C_trust| STANDOFF
+    COST_MODEL -->|Stale / Occluded| SCOUT
+
+    STANDOFF --> NAV2
+    NAV2 --> EN_ROUTE
+    EN_ROUTE -->|Target Relocated| STANDOFF
+    EN_ROUTE -->|Path Clear| CONFIRM
+    CONFIRM -->|Object Visually Verified| CORROB
+    CONFIRM -->|Object Missing / Blocked| SCOUT
+    SCOUT --> CORROB
+    CORROB --> SQLITE
+
+    ANNOT -->|/aems/annotated_image| WEB_UI
+    SQLITE -.->|Live DB Snapshot :9090| WEB_UI
+    NAV2 -.->|Telemetry & /plan| WEB_UI
 ```
 
+### Architecture Layer Breakdown
+
+1. **Perception & Fusion Layer (`yolo_perception_node.py`)**: Runs YOLOv8 on incoming camera frames in a background thread to maintain a 30 FPS video feed. Uses pinhole geometry and LiDAR multi-cluster depth analysis to project 2D boxes into 3D metric world coordinates $(X, Y)$, then resolves ambiguous Gazebo 3D meshes using strict nearest-neighbor spatial clustering.
+2. **Episodic Memory Layer (`landmark_manager_node.py`)**: Stores sightings with robot pose, task context, scene descriptions, and binary vector embeddings in SQLite. Indexes records using FAISS `IndexFlatIP` on 384-dimensional `all-MiniLM-L6-v2` dense vectors.
+3. **Decision & Reasoning Layer (`dashboard_node.py`)**: Evaluates a mathematical decision-theoretic cost function ($C_{\text{trust}}$ vs $C_{\text{reverify}}$ vs $C_{\text{explore}}$) before initiating movement. Integrates Groq LLM for natural language QA over episodic history.
+4. **Adaptive Navigation Layer (`Nav2` + Standoff Planner)**: Plans obstacle-clearing line-of-sight standoffs. Adapts dynamically en route if an object moved $>1.5\text{ m}$. Executes 360° visual sweeps and multi-room perimeter scouting if the target is occluded.
+5. **Mission Control UI (`aems_web_bridge.py`)**: Serves the browser dashboard over HTTP port `8080` and real-time telemetry / live detections over WebSocket port `9090`.
+
 ---
+
 
 ## Key Features
 
