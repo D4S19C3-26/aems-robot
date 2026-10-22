@@ -227,13 +227,37 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
+## 🎮 Running the System
+
+You can run AEMS either with the **One-Command All-in-One Bash Launcher** (quickest) or by launching each subsystem in **separate terminals** (recommended for debugging & presentations).
+
 ---
 
-## Running the System
+### Option A: The All-in-One Bash Script (Recommended)
 
-Open **4 separate terminals**:
+Run the automated launcher script from the workspace root:
 
-**Terminal 1 — Gazebo Simulation**
+```bash
+cd ~/aems_ws
+./start_full_demo.sh
+```
+
+**What this single command does automatically:**
+1. Cleans up any stale background processes (`gz-sim`, `python3`, `rviz2`).
+2. Sources all ROS 2 Jazzy and AEMS workspace environments.
+3. Launches **Gazebo Harmonic Arena** in Terminal 1.
+4. Launches **Nav2 Navigation Stack** in Terminal 2.
+5. Launches the **AEMS Intelligence Stack (`aems.launch.py`)** in Terminal 3.
+6. Launches **RViz2** in Terminal 4.
+7. Automatically opens the **Web Mission Control Dashboard** at `http://localhost:8080`.
+
+---
+
+### Option B: Modular Multi-Terminal Launch
+
+If you want full visibility into individual node logs or want to run without RViz:
+
+**Terminal 1 — Gazebo Simulation & World**
 ```bash
 source /opt/ros/jazzy/setup.bash && source install/setup.bash
 ros2 launch arena.launch.py
@@ -245,10 +269,17 @@ source /opt/ros/jazzy/setup.bash && source install/setup.bash
 ros2 launch nav2_minimal.launch.py
 ```
 
-**Terminal 3 — AEMS Core System**
+**Terminal 3 — AEMS Core Brain (`aems.launch.py`)**
 ```bash
 source /opt/ros/jazzy/setup.bash && source install/setup.bash
 ros2 launch adaptive_episodic_memory aems.launch.py
+```
+*(Runs YOLOv8 30 FPS perception, landmark manager, decision reasoner, and the web bridge)*
+
+**Terminal 4 (Optional) — RViz2 Visualization**
+```bash
+source /opt/ros/jazzy/setup.bash && source install/setup.bash
+rviz2 -d install/turtlebot3_navigation2/share/turtlebot3_navigation2/rviz/tb3_navigation2.rviz
 ```
 
 **Web Dashboard** → Open **http://localhost:8080** in your browser

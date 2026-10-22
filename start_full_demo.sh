@@ -32,7 +32,7 @@ if command -v gnome-terminal &> /dev/null; then
   gnome-terminal --title="4. RViz2" -- bash -c "source /home/dsc/aems_ws/aems_env.sh && rviz2 -d /home/dsc/aems_ws/install/turtlebot3_navigation2/share/turtlebot3_navigation2/rviz/tb3_navigation2.rviz; exec bash"
   
   echo ""
-  echo "All windows launched! Now opening Web Dashboard at http://localhost:8000..."
+  echo "All windows launched! Now opening Web Dashboard at http://localhost:8080..."
   xdg-open /home/dsc/aems_ws/dashboard/index.html &
 else
   echo "gnome-terminal not found. Please run the commands in separate terminal tabs manually."
