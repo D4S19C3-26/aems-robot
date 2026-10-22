@@ -132,7 +132,7 @@ class AEMSWebBridgeNode(Node):
 
     def _annotated_img_cb(self, msg: Image):
         now = time.time()
-        if now - self._last_img_time < 0.033:  # up to 30 FPS real-time video stream
+        if now - self._last_img_time < 0.020:  # up to 50 FPS cap for smoother display
             return
         self._last_img_time = now
 
@@ -148,10 +148,10 @@ class AEMSWebBridgeNode(Node):
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
             h, w = frame.shape[:2]
-            if w > 640:
-                frame = cv2.resize(frame, (640, int(h * 640 / w)))
+            if w > 480:
+                frame = cv2.resize(frame, (480, int(h * 480 / w)))
 
-            _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 65])
             b64_str = base64.b64encode(jpeg).decode('utf-8')
             self.broadcast_json({
                 'topic': '/aems/annotated_image',

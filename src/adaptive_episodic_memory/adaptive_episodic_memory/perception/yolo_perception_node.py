@@ -351,7 +351,7 @@ class YoloPerceptionNode(Node):
 
             try:
                 # Fast inference on CPU at 320x320
-                result = self.model(frame, imgsz=320, conf=self.confidence_threshold, verbose=False)[0]
+                result = self.model(frame, imgsz=256, conf=self.confidence_threshold, verbose=False)[0]
             except Exception as e:
                 self.get_logger().error(f'YOLO inference error: {e}')
                 continue
