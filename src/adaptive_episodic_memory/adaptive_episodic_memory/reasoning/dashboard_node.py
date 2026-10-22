@@ -72,7 +72,7 @@ ARENA_GROUND_TRUTH = {
     'fire hydrant': (8.0,   0.0, 1.8, ['person', 'fire hydrant']),
     'person':       (7.0,   7.0, 2.5, ['person', 'human']),
     'car':          (-7.0,  7.0, 3.0, ['car', 'truck', 'suv']),
-    'dining table': (-8.0, -2.0, 2.0, ['dining table', 'table']),
+    'dining table': (-8.0, -2.0, 2.0, ['dining table', 'table', 'chair']),
 }
 
 
